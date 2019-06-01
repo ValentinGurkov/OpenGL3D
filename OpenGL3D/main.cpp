@@ -1,18 +1,12 @@
-#include "libs.h"
+#include "Game.h"
 
 int main() {
+	Game game("OpenGL 3D", 1680, 1050, 4, 6, true);
 
-	glfwInit();
-
-
-	glewExperimental = GL_TRUE;
-
-	if (glewInit() != GLEW_OK) {
-		glfwTerminate();
-		throw "Error in GLEW init!";
+	while (!game.getWindowShouldClose()) {
+		game.update();
+		game.render();
 	}
-
-	system("PAUSE");
 
 	return 0;
 }
