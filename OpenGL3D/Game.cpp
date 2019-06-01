@@ -72,13 +72,20 @@ void Game::initMaterials() {
 	this->materials.push_back(new Material(glm::vec3(0.1f), glm::vec3(1.f), glm::vec3(1.f), 0, 1));
 }
 
-void Game::initMeshes() {
-	this->meshes.push_back(new Mesh(&Pyramid()));
-	this->meshes.push_back(new Mesh(&Quad()));
-}
-
 void Game::initModels() {
-	this->models.push_back(new Model(glm::vec3(0.f), this->materials[MAT_0], this->textures[TEX_CONTAINER], this->textures[TEX_CONTAINER_SPECULAR], this->meshes));
+	std::vector<Mesh*> meshes;
+	meshes.push_back(new Mesh(&Pyramid()));
+	this->models.push_back(new Model(glm::vec3(0.f), this->materials[MAT_0], this->textures[TEX_CONTAINER], this->textures[TEX_CONTAINER_SPECULAR], meshes));
+
+	this->models.push_back(new Model(glm::vec3(0.f, 1.f, 1.f), this->materials[MAT_0], this->textures[TEX_CONTAINER], this->textures[TEX_CONTAINER_SPECULAR], meshes));
+
+	this->models.push_back(new Model(glm::vec3(2.f, 0.f, 2.f), this->materials[MAT_0], this->textures[TEX_CONTAINER], this->textures[TEX_CONTAINER_SPECULAR], meshes));
+
+	for (auto*& i : meshes) {
+		delete i;
+	}
+
+	meshes.clear();
 }
 
 void Game::initLights() {
@@ -145,7 +152,6 @@ Game::Game(const char* title, const unsigned WINDOW_WIDTH, const unsigned WINDOW
 	this->initShaders();
 	this->initTextures();
 	this->initMaterials();
-	this->initMeshes();
 	this->initModels();
 	this->initLights();
 	this->initUniforms();
@@ -183,15 +189,9 @@ void Game::render() {
 
 	this->updateUniforms();
 
-	/*this->materials[MAT_0]->sendToShader(*this->shaders[SHADER_CORE_PROGRAM]);
-
-	this->shaders[SHADER_CORE_PROGRAM]->use();
-
-	this->textures[TEX_CONTAINER]->bind(0);
-	this->textures[TEX_CONTAINER_SPECULAR]->bind(1);
-	this->meshes[MESH_QUAD]->render(this->shaders[SHADER_CORE_PROGRAM]);*/
-
-	this->models[0]->render(this->shaders[SHADER_CORE_PROGRAM]);
+	for (auto* i : this->models) {
+		i->render(this->shaders[SHADER_CORE_PROGRAM]);
+	}
 
 	glfwSwapBuffers(window);
 	glFlush();
@@ -253,6 +253,12 @@ void Game::updateInput() {
 void Game::update() {
 	this->updateDt();
 	this->updateInput();
+
+	this->models[0]->rotate(glm::vec3(0.f, 1.f, 0.f));
+
+	this->models[1]->rotate(glm::vec3(0.f, 1.f, 0.f));
+
+	this->models[2]->rotate(glm::vec3(0.f, 1.f, 0.f));
 }
 void Game::framebuffer_resize_callback(GLFWwindow* window, int fbW, int fbH) {
 	glViewport(0, 0, fbW, fbH);

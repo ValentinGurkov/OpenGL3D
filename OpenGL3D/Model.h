@@ -23,11 +23,22 @@ public:
 		for (auto* i : meshes) {
 			this->meshes.push_back(new Mesh(*i));
 		}
+
+		for (auto* i : this->meshes) {
+			i->move(this->position);
+			i->setOrigin(this->position);
+		}
 	}
 
 	~Model() {
 		for (auto*& i : this->meshes) {
 			delete i;
+		}
+	}
+
+	void rotate(const glm::vec3 rotation) {
+		for (auto& i : this->meshes) {
+			i->rotate(rotation);
 		}
 	}
 
