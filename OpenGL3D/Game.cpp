@@ -152,32 +152,23 @@ Game::Game(const char* title, const unsigned WINDOW_WIDTH, const unsigned WINDOW
 }
 
 Game::~Game() {
-	for (size_t i = 0; i < this->shaders.size(); i++) {
-		delete this->shaders[i];
-	}
-
-	for (size_t i = 0; i < this->textures.size(); i++) {
-		delete this->textures[i];
-	}
-
-	for (size_t i = 0; i < this->materials.size(); i++) {
-		delete this->materials[i];
-	}
-
-	for (size_t i = 0; i < this->meshes.size(); i++) {
-		delete this->meshes[i];
-	}
-
-	for (auto*& i : models) {
-		delete i;
-	}
-
-	for (size_t i = 0; i < this->lights.size(); i++) {
-		delete this->lights[i];
-	}
-
 	glfwDestroyWindow(this->window);
 	glfwTerminate();
+
+	for (size_t i = 0; i < this->shaders.size(); i++)
+		delete this->shaders[i];
+
+	for (size_t i = 0; i < this->textures.size(); i++)
+		delete this->textures[i];
+
+	for (size_t i = 0; i < this->materials.size(); i++)
+		delete this->materials[i];
+
+	for (auto*& i : this->models)
+		delete i;
+
+	for (size_t i = 0; i < this->lights.size(); i++)
+		delete this->lights[i];
 }
 
 int Game::getWindowShouldClose() {
@@ -200,15 +191,10 @@ void Game::render() {
 	this->textures[TEX_CONTAINER_SPECULAR]->bind(1);
 	this->meshes[MESH_QUAD]->render(this->shaders[SHADER_CORE_PROGRAM]);*/
 
-	//this->models[0]->render(this->shaders[SHADER_CORE_PROGRAM]);
+	this->models[0]->render(this->shaders[SHADER_CORE_PROGRAM]);
 
 	glfwSwapBuffers(window);
 	glFlush();
-
-	glBindVertexArray(0);
-	glUseProgram(0);
-	glActiveTexture(0);
-	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Game::updateDt() {

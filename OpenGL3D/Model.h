@@ -13,9 +13,6 @@ private:
 	Texture* overrideTextureSpecular;
 	std::vector<Mesh*> meshes;
 
-	void updateUniforms() {
-	}
-
 public:
 	Model(glm::vec3 position, Material* material, Texture* overrideTexDif, Texture* overrideTexSpec, std::vector<Mesh*> meshes) {
 		this->position = position;
@@ -34,12 +31,7 @@ public:
 		}
 	}
 
-	void update() {
-	}
-
 	void render(Shader* shader) {
-		this->updateUniforms();
-
 		this->material->sendToShader(*shader);
 
 		shader->use();

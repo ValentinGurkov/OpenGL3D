@@ -173,8 +173,6 @@ public:
 		this->scale += scale;
 	}
 
-	void update() {}
-
 	void render(Shader* shader) {
 		this->updateModelMatrix();
 		this->updateUniforms(shader);
@@ -191,10 +189,5 @@ public:
 		else {
 			glDrawElements(GL_TRIANGLES, this->numOfIndices, GL_UNSIGNED_INT, 0);
 		}
-
-		glBindVertexArray(0);
-		glUseProgram(0);
-		glActiveTexture(0);
-		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 };

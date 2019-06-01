@@ -30,7 +30,8 @@ public:
 		if (image) {
 			glTexImage2D(type, 0, GL_RGBA, this->width, this->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 			glGenerateMipmap(type);
-		} else {
+		}
+		else {
 			std::cout << "ERROR::TEXTURE::TEXTURE_LOADING_FAILED: " << fileName << "\n";
 		}
 
@@ -70,7 +71,8 @@ public:
 		if (image) {
 			glTexImage2D(this->type, 0, GL_RGBA, this->width, this->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 			glGenerateMipmap(this->type);
-		} else {
+		}
+		else {
 			std::cout << "ERROR::TEXTURE::LOAD_FROM_FILE::TEXTURE_LOADING_FAILED: " << fileName << "\n";
 		}
 
