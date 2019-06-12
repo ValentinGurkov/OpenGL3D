@@ -1,16 +1,27 @@
 #pragma once
 
-#include "libs.h"
+#include <glew.h>
+#include <glfw3.h>
+
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtc/type_ptr.hpp>
+
+#include "Shader.h"
+#include "Camera.h"
+#include "Model.h"
+
+#include <iostream>
 
 enum shader_enum { SHADER_CORE_PROGRAM = 0 };
-enum texture_enum { TEX_GERALT0 = 0, TEX_GERALT0_SPECULAR, TEX_CONTAINER, TEX_CONTAINER_SPECULAR };
-enum material_enum { MAT_0 = 0 };
-enum mesh_enum { MESH_QUAD = 0 };
+enum model_enum { MODEL_PLANET = 0, MODEL_ASTEROID };
 
 class Game {
 private:
 
 	GLFWwindow* window;
+	std::vector<Shader*> shaders;
+	std::vector<Model*> models;
 	const unsigned WINDOW_WIDTH;
 	const unsigned WINDOW_HEIGHT;
 	int framebufferWidth;
@@ -19,48 +30,26 @@ private:
 	const unsigned GL_VERSION_MAJOR;
 	const unsigned GL_VERSION_MINOR;
 
-	float dt;
-	float curTime;
-	float lastTime;
+	float deltaTime;
+	float lastFrame;
+	float currentFrame;
 
-	double lastMouseX;
-	double lastMouseY;
-	double mouseX;
-	double mouseY;
-	double mouseOffsetX;
-	double mouseOffsetY;
-	bool firstMouse;
+	unsigned int amount;
+	glm::mat4* modelMatrices;
 
-	Camera camera;
+	float radius;
+	float offset;
 
-	glm::mat4 ViewMatrix;
-	glm::vec3 camPosition;
-	glm::vec3 worldUp;
-	glm::vec3 camFront;
-	glm::mat4 ProjectionMatrix;
-	float fov;
-	float nearPlane;
-	float farPlane;
-
-	std::vector<Shader*> shaders;
-	std::vector<Texture*> textures;
-	std::vector<Material*> materials;
-	std::vector<Model*> models;
-	std::vector<glm::vec3*> lights;
+	glm::mat4 projection;
+	glm::mat4 view;
 
 	void initGLFW();
 	void initWindow(const char* title, bool resizable);
 	void initGLEW();
 	void initOpenGLOptions();
-	void initMatrices();
 	void initShaders();
-	void initTextures();
-	void initMaterials();
 	void initModels();
-	void initLights();
-	void initUniforms();
-
-	void updateUniforms();
+	void initAsteroidMMs();
 
 public:
 	Game(const char* title, const unsigned WINDOW_WIDTH, const unsigned WINDOW_HEIGHT, const unsigned GL_VERSION_MAJOR, const unsigned GL_VERSION_MINOR, bool resizable);
@@ -70,10 +59,10 @@ public:
 
 	void update();
 	void render();
-	void updateDt();
-	void updateMouseInput();
-	void updateKeyboardInput();
 	void updateInput();
+	void updateDt();
 
 	static void framebuffer_resize_callback(GLFWwindow* window, int fbW, int fbH);
+	static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 };

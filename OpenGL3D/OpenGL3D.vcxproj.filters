@@ -61,5 +61,11 @@
     <None Include="vertex_core.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="instancing.fs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="instancing.vs">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

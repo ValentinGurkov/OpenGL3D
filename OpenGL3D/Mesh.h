@@ -1,204 +1,139 @@
-#pragma once
+#ifndef MESH_H
+#define MESH_H
 
-#include<iostream>
+#include <glew.h> // holds all OpenGL type declarations
 
-#include"Shader.h"
-#include"Texture.h"
-#include"Material.h"
-#include"Primitives.h"
-#include"Vertex.h"
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+
+#include "Shader.h"
+
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <vector>
+using namespace std;
+
+struct Vertex {
+	// position
+	glm::vec3 Position;
+	// normal
+	glm::vec3 Normal;
+	// texCoords
+	glm::vec2 TexCoords;
+	// tangent
+	glm::vec3 Tangent;
+	// bitangent
+	glm::vec3 Bitangent;
+};
+
+struct Texture {
+	unsigned int id;
+	string type;
+	string path;
+};
 
 class Mesh {
-private:
-	Vertex* vertexArray;
-	unsigned numOfVertices;
-	GLuint* indexArray;
-	unsigned numOfIndices;
+public:
+	/*  Mesh Data  */
+	vector<Vertex> vertices;
+	vector<unsigned int> indices;
+	vector<Texture> textures;
+	unsigned int VAO;
 
-	GLuint VAO;
-	GLuint VBO;
-	GLuint EBO;
+	/*  Functions  */
+	// constructor
+	Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures)
+	{
+		this->vertices = vertices;
+		this->indices = indices;
+		this->textures = textures;
 
-	glm::vec3 position;
-	glm::vec3 origin;
-	glm::vec3 rotation;
-	glm::vec3 scale;
-	glm::mat4 ModelMatrix;
+		// now that we have all the required data, set the vertex buffers and its attribute pointers.
+		setupMesh();
+	}
 
-	void initVAO() {
-		//CREATE VAO
-		glCreateVertexArrays(1, &this->VAO);
-		glBindVertexArray(this->VAO);
+	// render the mesh
+	void Draw(Shader shader)
+	{
+		// bind appropriate textures
+		unsigned int diffuseNr = 1;
+		unsigned int specularNr = 1;
+		unsigned int normalNr = 1;
+		unsigned int heightNr = 1;
+		for (unsigned int i = 0; i < textures.size(); i++)
+		{
+			glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
+			// retrieve texture number (the N in diffuse_textureN)
+			string number;
+			string name = textures[i].type;
+			if (name == "texture_diffuse")
+				number = std::to_string(diffuseNr++);
+			else if (name == "texture_specular")
+				number = std::to_string(specularNr++); // transfer unsigned int to stream
+			else if (name == "texture_normal")
+				number = std::to_string(normalNr++); // transfer unsigned int to stream
+			else if (name == "texture_height")
+				number = std::to_string(heightNr++); // transfer unsigned int to stream
 
-		//GEN VBO AND SEND DATA
-		glGenBuffers(1, &this->VBO);
-		glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
-		glBufferData(GL_ARRAY_BUFFER, this->numOfVertices * sizeof(Vertex), this->vertexArray, GL_STATIC_DRAW);
-
-		//GEN EBO AND SEND DATA'
-		if (this->numOfIndices > 0) {
-			glGenBuffers(1, &this->EBO);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->numOfIndices * sizeof(GLuint), this->indexArray, GL_STATIC_DRAW);
+													 // now set the sampler to the correct texture unit
+			glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
+			// and finally bind the texture
+			glBindTexture(GL_TEXTURE_2D, textures[i].id);
 		}
 
-		//SET VERTEX ATTRIBUTES AND ENABLE  - input assembly
-		//Position
-		//GLuint attribLocation = glGetAttribLocation(core_program, "vertex_position");
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, position));
-		glEnableVertexAttribArray(0);
-		//Color
-		//GLuint attribLocation = glGetAttribLocation(core_program, "vertex_color");
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, color));
-		glEnableVertexAttribArray(1);
-		//Texcoord
-		//GLuint attribLocation = glGetAttribLocation(core_program, "vertex_texcoord");
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, texcoord));
-		glEnableVertexAttribArray(2);
-		//Normal
-		//GLuint attribLocation = glGetAttribLocation(core_program, "vertex_normal");
-		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, normal));
-		glEnableVertexAttribArray(3);
+		// draw mesh
+		glBindVertexArray(VAO);
+		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 
-		//BIND VAO 0
+		// always good practice to set everything back to defaults once configured.
+		glActiveTexture(GL_TEXTURE0);
+	}
+
+private:
+	/*  Render data  */
+	unsigned int VBO, EBO;
+
+	/*  Functions    */
+	// initializes all the buffer objects/arrays
+	void setupMesh()
+	{
+		// create buffers/arrays
+		glGenVertexArrays(1, &VAO);
+		glGenBuffers(1, &VBO);
+		glGenBuffers(1, &EBO);
+
+		glBindVertexArray(VAO);
+		// load data into vertex buffers
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		// A great thing about structs is that their memory layout is sequential for all its items.
+		// The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
+		// again translates to 3/2 floats which translates to a byte array.
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+		// set the vertex attribute pointers
+		// vertex Positions
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+		// vertex normals
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+		// vertex texture coords
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+		// vertex tangent
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
+		// vertex bitangent
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
+
 		glBindVertexArray(0);
 	}
-
-	void updateModelMatrix() {
-		this->ModelMatrix = glm::mat4(1.f);
-		this->ModelMatrix = glm::translate(this->ModelMatrix, this->origin);
-		this->ModelMatrix = glm::rotate(this->ModelMatrix, glm::radians(this->rotation.x), glm::vec3(1.f, 0.f, 0.f));
-		this->ModelMatrix = glm::rotate(this->ModelMatrix, glm::radians(this->rotation.y), glm::vec3(0.f, 1.f, 0.f));
-		this->ModelMatrix = glm::rotate(this->ModelMatrix, glm::radians(this->rotation.z), glm::vec3(0.f, 0.f, 1.f));
-		this->ModelMatrix = glm::translate(this->ModelMatrix, this->position - this->origin);
-		this->ModelMatrix = glm::scale(this->ModelMatrix, this->scale);
-	}
-
-	void updateUniforms(Shader* shader) {
-		shader->setMat4fv("ModelMatrix", this->ModelMatrix);
-	}
-public:
-
-	Mesh(Primitive* primitive,
-		glm::vec3 position = glm::vec3(0.f), glm::vec3 origin = glm::vec3(0.f), glm::vec3 rotation = glm::vec3(0.f), glm::vec3 scale = glm::vec3(1.f)) {
-		this->position = position;
-		this->origin = origin;
-		this->rotation = rotation;
-		this->scale = scale;
-		this->scale = scale;
-		this->numOfVertices = primitive->getNumOfVertices();
-		this->numOfIndices = primitive->getNumOfIndices();
-		this->vertexArray = new Vertex[this->numOfVertices];
-		for (size_t i = 0; i < this->numOfVertices; i++) {
-			this->vertexArray[i] = primitive->getVertices()[i];
-		}
-
-		this->indexArray = new GLuint[this->numOfIndices];
-		for (size_t i = 0; i < this->numOfIndices; i++) {
-			this->indexArray[i] = primitive->getIndices()[i];
-		}
-
-		this->initVAO();
-		this->updateModelMatrix();
-	}
-
-	Mesh(Vertex* vertexArray, const unsigned& numOfVertices, GLuint* indexArray, const unsigned& numOfIndices,
-		glm::vec3 position = glm::vec3(0.f), glm::vec3 origin = glm::vec3(0.f), glm::vec3 rotation = glm::vec3(0.f), glm::vec3 scale = glm::vec3(1.f)) {
-		this->position = position;
-		this->origin = origin;
-		this->rotation = rotation;
-		this->scale = scale;
-		this->numOfVertices = numOfVertices;
-		this->numOfIndices = numOfIndices;
-		this->vertexArray = new Vertex[this->numOfVertices];
-		for (size_t i = 0; i < this->numOfVertices; i++) {
-			this->vertexArray[i] = vertexArray[i];
-		}
-
-		this->indexArray = new GLuint[this->numOfIndices];
-		for (size_t i = 0; i < this->numOfIndices; i++) {
-			this->indexArray[i] = indexArray[i];
-		}
-
-		this->initVAO();
-		this->updateModelMatrix();
-	}
-
-	Mesh(const Mesh& obj) {
-		this->position = obj.position;
-		this->origin = obj.origin;
-		this->rotation = obj.rotation;
-		this->scale = obj.scale;
-		this->numOfVertices = obj.numOfVertices;
-		this->numOfIndices = obj.numOfIndices;
-		this->vertexArray = new Vertex[this->numOfVertices];
-		for (size_t i = 0; i < this->numOfVertices; i++) {
-			this->vertexArray[i] = obj.vertexArray[i];
-		}
-
-		this->indexArray = new GLuint[this->numOfIndices];
-		for (size_t i = 0; i < this->numOfIndices; i++) {
-			this->indexArray[i] = obj.indexArray[i];
-		}
-
-		this->initVAO();
-		this->updateModelMatrix();
-	}
-
-	~Mesh() {
-		glDeleteVertexArrays(1, &this->VAO);
-		glDeleteBuffers(1, &this->VBO);
-		if (this->numOfIndices > 0) {
-			glDeleteBuffers(1, &this->EBO);
-		}
-
-		delete[] this->vertexArray;
-		delete[] this->indexArray;
-	}
-
-	void setPosition(const glm::vec3 position) {
-		this->position = position;
-	}
-
-	void setOrigin(const glm::vec3 origin) {
-		this->origin = origin;
-	}
-
-	void setRotation(const glm::vec3 rotation) {
-		this->rotation = rotation;
-	}
-
-	void setScale(const glm::vec3 scale) {
-		this->scale = scale;
-	}
-
-	void move(const glm::vec3 position) {
-		this->position += position;
-	}
-
-	void rotate(const glm::vec3 rotation) {
-		this->rotation += rotation;
-	}
-
-	void changeSacle(const glm::vec3 scale) {
-		this->scale += scale;
-	}
-
-	void render(Shader* shader) {
-		this->updateModelMatrix();
-		this->updateUniforms(shader);
-
-		shader->use();
-
-		//BIND VERTEX ARRAY OBJECT
-		glBindVertexArray(this->VAO);
-
-		//DRAW
-		if (this->numOfIndices == 0) {
-			glDrawArrays(GL_TRIANGLES, 0, this->numOfVertices);
-		}
-		else {
-			glDrawElements(GL_TRIANGLES, this->numOfIndices, GL_UNSIGNED_INT, 0);
-		}
-	}
 };
+#endif

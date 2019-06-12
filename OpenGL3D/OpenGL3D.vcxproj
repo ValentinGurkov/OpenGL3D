@@ -76,12 +76,12 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\Linking\GLEW\include;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\SOIL2\include;$(SolutionDir)\Linking\GLM\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Linking\GLEW\include;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\SOIL2\include;$(SolutionDir)\Linking\GLM\include;$(SolutionDir)\Linking\ASSIMP\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\GLFW\lib;$(SolutionDir)\Linking\SOIL2\lib;$(SolutionDir)\Linking\GLEW\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;glew32.lib;soil2-debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\GLFW\lib;$(SolutionDir)\Linking\SOIL2\lib;$(SolutionDir)\Linking\GLEW\lib;$(SolutionDir)\Linking\ASSIMP\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;glew32.lib;soil2-debug.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -144,6 +144,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fragment_core.glsl" />
+    <None Include="instancing.fs" />
+    <None Include="instancing.vs" />
     <None Include="vertex_core.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
