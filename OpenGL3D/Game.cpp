@@ -80,25 +80,33 @@ void Game::initModels() {
 void Game::initAsteroidMMs() {
 	srand(glfwGetTime());
 	float angle, displacement, x, y, z, scale, rotAngle;
-	for (unsigned int i = 0; i < this->amount; i++) {
-		// 1. translation: displace along circle with 'radius' in range [-offset, offset]
+	for (size_t i = 0; i < this->amount; i++) {
 		angle = (float)i / (float)this->amount * 360.0f;
 		displacement = (rand() % (int)(2 * this->offset * 100)) / 100.0f - this->offset;
 		x = sin(angle) * this->radius + displacement;
 		displacement = (rand() % (int)(2 * this->offset * 100)) / 100.0f - this->offset;
-		y = displacement * 0.4f; // keep height of asteroid field smaller compared to width of x and z
+		y = displacement * 0.4f;
 		displacement = (rand() % (int)(2 * this->offset * 100)) / 100.0f - this->offset;
 		z = cos(angle) * this->radius + displacement;
-
-		// 2. scale: Scale between 0.05 and 0.25f
 		scale = (rand() % 20) / 100.0f + 0.05;
-
-		// 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
 		rotAngle = (rand() % 360);
 
-		// 4. now add to list of matrices
 		modelMatrices[i].initModelMatrix(glm::vec3(x, y, z), glm::vec3(scale), rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
 	}
+}
+
+void Game::initUniforms() {
+	this->projection = glm::perspective(glm::radians(45.0f), (float)this->WINDOW_WIDTH / (float)this->WINDOW_HEIGHT, 0.1f, 1000.0f);
+	this->view = camera.GetViewMatrix();
+
+	this->shaders[SHADER_CORE_PROGRAM]->use();
+	this->shaders[SHADER_CORE_PROGRAM]->setMat4("projection", this->projection);
+	this->shaders[SHADER_CORE_PROGRAM]->setMat4("view", this->view);
+
+	this->view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
+	this->shaders[SHADER_SKYBOX]->use();
+	this->shaders[SHADER_SKYBOX]->setMat4("projection", this->projection);
+	this->shaders[SHADER_SKYBOX]->setMat4("view", this->view);
 }
 
 Game::Game(const char* title, const unsigned WINDOW_WIDTH, const unsigned WINDOW_HEIGHT, const unsigned GL_VERSION_MAJOR, const unsigned GL_VERSION_MINOR, bool resizable)
@@ -123,8 +131,10 @@ Game::Game(const char* title, const unsigned WINDOW_WIDTH, const unsigned WINDOW
 	this->initGLEW();
 	this->initOpenGLOptions();
 	this->initShaders();
+	this->skybox.load();
 	this->initModels();
 	this->initAsteroidMMs();
+	this->initUniforms();
 }
 
 Game::~Game() {
@@ -144,14 +154,11 @@ int Game::getWindowShouldClose() {
 }
 
 void Game::render() {
-	// render
-	// ------
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// configure transformation matrices
 	this->projection = glm::perspective(glm::radians(45.0f), (float)this->WINDOW_WIDTH / (float)this->WINDOW_HEIGHT, 0.1f, 1000.0f);
-	this->view = camera.GetViewMatrix();;
+	this->view = camera.GetViewMatrix();
+
 	this->shaders[SHADER_CORE_PROGRAM]->use();
 	this->shaders[SHADER_CORE_PROGRAM]->setMat4("projection", this->projection);
 	this->shaders[SHADER_CORE_PROGRAM]->setMat4("view", this->view);
@@ -168,8 +175,28 @@ void Game::render() {
 		this->models[MODEL_ASTEROID]->Draw(*this->shaders[SHADER_CORE_PROGRAM]);
 	}
 
-	// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-	// -------------------------------------------------------------------------------
+	//cubes
+	glBindVertexArray(this->skybox.getCubeVAO());
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, this->skybox.getCubeTexture());
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+
+	//skybox
+	glDepthFunc(GL_LEQUAL);
+	this->shaders[SHADER_SKYBOX]->use();
+	this->view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
+	this->shaders[SHADER_SKYBOX]->setMat4("view", this->view);
+	this->shaders[SHADER_SKYBOX]->setMat4("projection", this->projection);
+
+	// skybox cube
+	glBindVertexArray(this->skybox.getSkyboxVAO());
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, this->skybox.getCubeMapTexture());
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+	glDepthFunc(GL_LESS);
+
 	glfwSwapBuffers(this->window);
 }
 void Game::update() {

@@ -40,9 +40,10 @@ private:
 	double radius;
 	double offset;
 
+	Skybox skybox;
+
 	glm::mat4 projection;
 	glm::mat4 view;
-
 	void initGLFW();
 	void initWindow(const char* title, bool resizable);
 	void initGLEW();
@@ -50,6 +51,7 @@ private:
 	void initShaders();
 	void initModels();
 	void initAsteroidMMs();
+	void initUniforms();
 
 public:
 	Game(const char* title, const unsigned WINDOW_WIDTH, const unsigned WINDOW_HEIGHT, const unsigned GL_VERSION_MAJOR, const unsigned GL_VERSION_MINOR, bool resizable);
