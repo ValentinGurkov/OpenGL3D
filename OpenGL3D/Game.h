@@ -1,17 +1,6 @@
 #pragma once
 
-#include <glew.h>
-#include <glfw3.h>
-
-#include <gtc/type_ptr.hpp>
-
-#include "Shader.h"
-#include "Camera.h"
-#include "Model.h"
-#include "AsteroidModelMatrix.h"
-#include "Skybox.h"
-
-#include <iostream>
+#include "libs.h"
 
 enum shader_enum { SHADER_CORE_PROGRAM = 0, SHADER_SKYBOX };
 enum model_enum { MODEL_PLANET = 0, MODEL_ASTEROID };

@@ -32,16 +32,10 @@
     <ClInclude Include="Texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Vertex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Primitives.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Game.h">
@@ -61,16 +55,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="instancing.fs">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="instancing.vs">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="skybox.fs">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="skybox.vs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="planets.fs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="planets.vs">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

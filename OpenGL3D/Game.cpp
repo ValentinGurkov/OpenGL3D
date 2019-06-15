@@ -65,7 +65,7 @@ void Game::initOpenGLOptions() {
 }
 
 void Game::initShaders() {
-	this->shaders.push_back(new Shader("instancing.vs", "instancing.fs"));
+	this->shaders.push_back(new Shader("planets.vs", "planets.fs"));
 	this->shaders.push_back(new Shader("skybox.vs", "skybox.fs"));
 }
 

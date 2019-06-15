@@ -8,7 +8,7 @@ private:
 	GLuint cubeTexture;
 	GLuint cubeMapTexture;
 	GLuint cubeVAO, cubeVBO, skyboxVAO, skyboxVBO;
-	vector<std::string> faces{
+	std::vector<std::string> faces{
 		"resources/textures/skybox/right.png",
 		"resources/textures/skybox/left.png",
 		"resources/textures/skybox/top.png",
@@ -160,7 +160,7 @@ private:
 		return textureID;
 	}
 
-	GLuint loadCubemap(vector<std::string> faces) {
+	GLuint loadCubemap(std::vector<std::string> faces) {
 		GLuint textureID;
 		glGenTextures(1, &textureID);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
@@ -197,6 +197,7 @@ public:
 		this->cubeTexture = loadTexture("resources/textures/marble.jpg");
 		this->cubeMapTexture = loadCubemap(this->faces);
 	}
+
 	inline GLuint getCubeTexture() const { return this->cubeTexture; }
 	inline GLuint getCubeMapTexture() const { return this->cubeMapTexture; }
 	inline GLuint getCubeVAO() const { return this->cubeVAO; }
