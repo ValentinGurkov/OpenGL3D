@@ -3,6 +3,7 @@ Camera camera(glm::vec3(0.0f, 0.0f, 55.0f));
 float lastX;
 float lastY;
 bool firstMouse;
+
 void Game::initGLFW() {
 	if (glfwInit() == GLFW_FALSE) {
 		std::cout << "ERORR:GLFW_INIT_FAILED" << "\n";
@@ -14,7 +15,7 @@ void Game::initWindow(const char* title, bool resizable) {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, this->GL_VERSION_MAJOR);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, this->GL_VERSION_MINOR);
-	//glfwWindowHint(GLFW_RESIZABLE, resizable);
+	glfwWindowHint(GLFW_RESIZABLE, resizable);
 	this->window = glfwCreateWindow(this->WINDOW_WIDTH, this->WINDOW_HEIGHT, title, NULL, NULL);
 
 	if (this->window == nullptr) {
@@ -24,8 +25,8 @@ void Game::initWindow(const char* title, bool resizable) {
 
 	glfwGetFramebufferSize(this->window, &this->framebufferWidth, &this->framebufferHeight);
 	glfwSetFramebufferSizeCallback(this->window, this->framebuffer_resize_callback);
-	glfwSetCursorPosCallback(window, this->mouse_callback);
-	glfwSetScrollCallback(window, this->scroll_callback);
+	glfwSetCursorPosCallback(this->window, this->mouse_callback);
+	glfwSetScrollCallback(this->window, this->scroll_callback);
 	glfwMakeContextCurrent(this->window);
 }
 
@@ -56,6 +57,9 @@ void Game::initShaders() {
 void Game::initModels() {
 	this->models.push_back(new Model("resources/objects/planet/planet.obj"));
 	this->models.push_back(new Model("resources/objects/rock/rock.obj"));
+
+	this->models[MODEL_PLANET]->setOrigin(glm::vec3(0.0f, -3.0f, 0.0f));
+	this->models[MODEL_PLANET]->setScale(glm::vec3(4.0f, 4.0f, 4.0f));
 }
 
 void Game::initAsteroidMMs() {
@@ -72,17 +76,20 @@ void Game::initAsteroidMMs() {
 		displacement = (rand() % (int)(2 * this->offset * 100)) / 100.0f - this->offset;
 		float z = cos(angle) * this->radius + displacement;
 		model = glm::translate(model, glm::vec3(x, y, z));
+		modelMatrices[i].setPosition(glm::vec3(x, y, z));
 
 		// 2. scale: Scale between 0.05 and 0.25f
 		float scale = (rand() % 20) / 100.0f + 0.05;
 		model = glm::scale(model, glm::vec3(scale));
+		modelMatrices[i].setScale(glm::vec3(scale));
 
 		// 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
 		float rotAngle = (rand() % 360);
 		model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
+		modelMatrices[i].setRotation(glm::vec3(0.4f, 0.6f, 0.8f));
 
 		// 4. now add to list of matrices
-		modelMatrices[i] = model;
+		//modelMatrices[i].setModelMatrix(model);
 	}
 }
 
@@ -92,16 +99,17 @@ Game::Game(const char* title, const unsigned WINDOW_WIDTH, const unsigned WINDOW
 	this->window = nullptr;
 	this->framebufferWidth = this->WINDOW_WIDTH;
 	this->framebufferHeight = this->WINDOW_HEIGHT;
-	lastX = (float)this->WINDOW_WIDTH / 2.0;
-	lastY = (float)this->WINDOW_HEIGHT / 2.0;
-	firstMouse = true;
 	this->deltaTime = 0.f;
 	this->lastFrame = 0.f;
 	this->amount = 1000;
-	this->modelMatrices = new glm::mat4[amount];
+	this->modelMatrices = new ModelMatrix[amount];
 
 	this->radius = 50.0;
 	this->offset = 2.5f;
+
+	lastX = (float)this->WINDOW_WIDTH / 2.0;
+	lastY = (float)this->WINDOW_HEIGHT / 2.0;
+	firstMouse = true;
 
 	this->initGLFW();
 	this->initWindow(title, resizable);
@@ -113,6 +121,15 @@ Game::Game(const char* title, const unsigned WINDOW_WIDTH, const unsigned WINDOW
 }
 
 Game::~Game() {
+	for (size_t i = 0; i < this->shaders.size(); i++) {
+		delete this->shaders[i];
+	}
+
+	for (size_t i = 0; i < this->models.size(); i++) {
+		delete this->models[i];
+	}
+
+	delete[] this->modelMatrices;
 }
 
 int Game::getWindowShouldClose() {
@@ -120,13 +137,6 @@ int Game::getWindowShouldClose() {
 }
 
 void Game::render() {
-	this->updateInput();
-}
-void Game::update() {
-	glfwPollEvents();
-	this->updateDt();
-	this->updateInput();
-
 	// render
 	// ------
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -140,21 +150,29 @@ void Game::update() {
 	this->shaders[SHADER_CORE_PROGRAM]->setMat4("view", this->view);
 
 	// draw planet
-	glm::mat4 model(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
-	this->shaders[SHADER_CORE_PROGRAM]->setMat4("model", model);
+	this->models[MODEL_PLANET]->updateModelMatrix();
+	this->shaders[SHADER_CORE_PROGRAM]->setMat4("model", this->models[MODEL_PLANET]->getModelMatrix());
 	this->models[MODEL_PLANET]->Draw(*this->shaders[SHADER_CORE_PROGRAM]);
 
 	// draw meteorites
 	for (unsigned int i = 0; i < amount; i++) {
-		this->shaders[SHADER_CORE_PROGRAM]->setMat4("model", modelMatrices[i]);
+		modelMatrices[i].updateModelMatrix();
+		this->shaders[SHADER_CORE_PROGRAM]->setMat4("model", modelMatrices[i].getModelMatrix());
 		this->models[MODEL_ASTEROID]->Draw(*this->shaders[SHADER_CORE_PROGRAM]);
 	}
 
 	// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 	// -------------------------------------------------------------------------------
 	glfwSwapBuffers(this->window);
+}
+void Game::update() {
+	glfwPollEvents();
+	this->updateDt();
+	this->updateInput();
+	this->models[MODEL_PLANET]->rotate(glm::vec3(0.f, 0.03f, 0.f));
+	for (unsigned int i = 0; i < amount; i++) {
+		modelMatrices[i].rotate(glm::vec3(0.f, 0.06f, 0.f));
+	}
 }
 
 void Game::updateInput() {

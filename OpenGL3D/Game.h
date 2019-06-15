@@ -3,13 +3,14 @@
 #include <glew.h>
 #include <glfw3.h>
 
-#include <glm.hpp>
-#include <gtc/matrix_transform.hpp>
+//#include <glm.hpp>
+//#include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 
 #include "Shader.h"
 #include "Camera.h"
 #include "Model.h"
+#include "ModelMatrix.h"
 
 #include <iostream>
 
@@ -22,6 +23,7 @@ private:
 	GLFWwindow* window;
 	std::vector<Shader*> shaders;
 	std::vector<Model*> models;
+	ModelMatrix* modelMatrices;
 	const unsigned WINDOW_WIDTH;
 	const unsigned WINDOW_HEIGHT;
 	int framebufferWidth;
@@ -35,7 +37,6 @@ private:
 	float currentFrame;
 
 	unsigned int amount;
-	glm::mat4* modelMatrices;
 
 	float radius;
 	float offset;

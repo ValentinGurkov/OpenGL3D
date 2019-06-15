@@ -23,28 +23,12 @@ using namespace std;
 
 class Model
 {
-public:
-	/*  Model Data */
-	vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
-	vector<Mesh> meshes;
-	string directory;
-	bool gammaCorrection;
-
-	/*  Functions   */
-	// constructor, expects a filepath to a 3D model.
-	Model(string const& path, bool gamma = false) : gammaCorrection(gamma)
-	{
-		loadModel(path);
-	}
-
-	// draws the model, and thus all its meshes
-	void Draw(Shader shader)
-	{
-		for (unsigned int i = 0; i < meshes.size(); i++)
-			meshes[i].Draw(shader);
-	}
-
 private:
+	glm::vec3 position;
+	glm::vec3 origin;
+	glm::vec3 rotation;
+	glm::vec3 scale;
+	glm::mat4 ModelMatrix;
 	unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false)
 	{
 		string filename = string(path);
@@ -231,6 +215,69 @@ private:
 			}
 		}
 		return textures;
+	}
+
+public:
+	/*  Model Data */
+	vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
+	vector<Mesh> meshes;
+	string directory;
+	bool gammaCorrection;
+
+	void updateModelMatrix() {
+		this->ModelMatrix = glm::mat4(1.f);
+		this->ModelMatrix = glm::translate(this->ModelMatrix, this->origin);
+		this->ModelMatrix = glm::rotate(this->ModelMatrix, glm::radians(this->rotation.x), glm::vec3(1.f, 0.f, 0.f));
+		this->ModelMatrix = glm::rotate(this->ModelMatrix, glm::radians(this->rotation.y), glm::vec3(0.f, 1.f, 0.f));
+		this->ModelMatrix = glm::rotate(this->ModelMatrix, glm::radians(this->rotation.z), glm::vec3(0.f, 0.f, 1.f));
+		this->ModelMatrix = glm::translate(this->ModelMatrix, this->position - this->origin);
+		this->ModelMatrix = glm::scale(this->ModelMatrix, this->scale);
+	}
+
+	/*  Functions   */
+	// constructor, expects a filepath to a 3D model.
+	Model(string const& path, bool gamma = false) : gammaCorrection(gamma)
+	{
+		loadModel(path);
+	}
+
+	// draws the model, and thus all its meshes
+	void Draw(Shader shader)
+	{
+		for (unsigned int i = 0; i < meshes.size(); i++)
+			meshes[i].Draw(shader);
+	}
+
+	void setPosition(const glm::vec3 position) {
+		this->position = position;
+	}
+
+	void setOrigin(const glm::vec3 origin) {
+		this->origin = origin;
+	}
+
+	void setRotation(const glm::vec3 rotation) {
+		this->rotation = rotation;
+	}
+
+	void setScale(const glm::vec3 scale) {
+		this->scale = scale;
+	}
+
+	void move(const glm::vec3 position) {
+		this->position += position;
+	}
+
+	void rotate(const glm::vec3 rotation) {
+		this->rotation += rotation;
+	}
+
+	void changeSacle(const glm::vec3 scale) {
+		this->scale += scale;
+	}
+
+	glm::mat4 getModelMatrix() const {
+		return this->ModelMatrix;
 	}
 };
 
