@@ -3,18 +3,17 @@
 #include <glew.h>
 #include <glfw3.h>
 
-//#include <glm.hpp>
-//#include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 
 #include "Shader.h"
 #include "Camera.h"
 #include "Model.h"
-#include "ModelMatrix.h"
+#include "AsteroidModelMatrix.h"
+#include "Skybox.h"
 
 #include <iostream>
 
-enum shader_enum { SHADER_CORE_PROGRAM = 0 };
+enum shader_enum { SHADER_CORE_PROGRAM = 0, SHADER_SKYBOX };
 enum model_enum { MODEL_PLANET = 0, MODEL_ASTEROID };
 
 class Game {
@@ -23,7 +22,7 @@ private:
 	GLFWwindow* window;
 	std::vector<Shader*> shaders;
 	std::vector<Model*> models;
-	ModelMatrix* modelMatrices;
+	AsteroidModelMatrix* modelMatrices;
 	const unsigned WINDOW_WIDTH;
 	const unsigned WINDOW_HEIGHT;
 	int framebufferWidth;
@@ -32,14 +31,14 @@ private:
 	const unsigned GL_VERSION_MAJOR;
 	const unsigned GL_VERSION_MINOR;
 
-	float deltaTime;
-	float lastFrame;
-	float currentFrame;
+	double deltaTime;
+	double lastFrame;
+	double currentFrame;
 
 	unsigned int amount;
 
-	float radius;
-	float offset;
+	double radius;
+	double offset;
 
 	glm::mat4 projection;
 	glm::mat4 view;

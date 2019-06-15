@@ -53,21 +53,24 @@
     <ClInclude Include="Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ModelMatrix.h">
+    <ClInclude Include="AsteroidModelMatrix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Skybox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="fragment_core.glsl">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="vertex_core.glsl">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="instancing.fs">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="instancing.vs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="skybox.fs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="skybox.vs">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

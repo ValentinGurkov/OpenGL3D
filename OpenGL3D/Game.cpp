@@ -1,7 +1,9 @@
 #include "Game.h"
 Camera camera(glm::vec3(0.0f, 0.0f, 55.0f));
-float lastX;
-float lastY;
+double lastX;
+double lastY;
+double xoffset;
+double yoffset;
 bool firstMouse;
 
 void Game::initGLFW() {
@@ -48,10 +50,23 @@ void Game::initOpenGLOptions() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glfwSetInputMode(this->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0); glVertex2f(-1, -1);
+	glTexCoord2f(1, 0); glVertex2f(1, -1);
+	glTexCoord2f(1, 1); glVertex2f(1, 1);
+	glTexCoord2f(0, 1); glVertex2f(-1, 1);
+	glEnd();
 }
 
 void Game::initShaders() {
 	this->shaders.push_back(new Shader("instancing.vs", "instancing.fs"));
+	this->shaders.push_back(new Shader("skybox.vs", "skybox.fs"));
 }
 
 void Game::initModels() {
@@ -63,46 +78,38 @@ void Game::initModels() {
 }
 
 void Game::initAsteroidMMs() {
-	srand(glfwGetTime()); // initialize random seed
-
+	srand(glfwGetTime());
+	float angle, displacement, x, y, z, scale, rotAngle;
 	for (unsigned int i = 0; i < this->amount; i++) {
-		glm::mat4 model = glm::mat4(1.0f);
 		// 1. translation: displace along circle with 'radius' in range [-offset, offset]
-		float angle = (float)i / (float)this->amount * 360.0f;
-		float displacement = (rand() % (int)(2 * this->offset * 100)) / 100.0f - this->offset;
-		float x = sin(angle) * this->radius + displacement;
+		angle = (float)i / (float)this->amount * 360.0f;
 		displacement = (rand() % (int)(2 * this->offset * 100)) / 100.0f - this->offset;
-		float y = displacement * 0.4f; // keep height of asteroid field smaller compared to width of x and z
+		x = sin(angle) * this->radius + displacement;
 		displacement = (rand() % (int)(2 * this->offset * 100)) / 100.0f - this->offset;
-		float z = cos(angle) * this->radius + displacement;
-		model = glm::translate(model, glm::vec3(x, y, z));
-		modelMatrices[i].setPosition(glm::vec3(x, y, z));
+		y = displacement * 0.4f; // keep height of asteroid field smaller compared to width of x and z
+		displacement = (rand() % (int)(2 * this->offset * 100)) / 100.0f - this->offset;
+		z = cos(angle) * this->radius + displacement;
 
 		// 2. scale: Scale between 0.05 and 0.25f
-		float scale = (rand() % 20) / 100.0f + 0.05;
-		model = glm::scale(model, glm::vec3(scale));
-		modelMatrices[i].setScale(glm::vec3(scale));
+		scale = (rand() % 20) / 100.0f + 0.05;
 
 		// 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
-		float rotAngle = (rand() % 360);
-		model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
-		modelMatrices[i].setRotation(glm::vec3(0.4f, 0.6f, 0.8f));
+		rotAngle = (rand() % 360);
 
 		// 4. now add to list of matrices
-		//modelMatrices[i].setModelMatrix(model);
+		modelMatrices[i].initModelMatrix(glm::vec3(x, y, z), glm::vec3(scale), rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
 	}
 }
 
 Game::Game(const char* title, const unsigned WINDOW_WIDTH, const unsigned WINDOW_HEIGHT, const unsigned GL_VERSION_MAJOR, const unsigned GL_VERSION_MINOR, bool resizable)
-	:WINDOW_WIDTH(WINDOW_WIDTH), WINDOW_HEIGHT(WINDOW_HEIGHT), GL_VERSION_MAJOR(GL_VERSION_MAJOR), GL_VERSION_MINOR(GL_VERSION_MINOR)//, camera(glm::vec3(0.0f, 0.0f, 55.0f)) {
-{
+	:WINDOW_WIDTH(WINDOW_WIDTH), WINDOW_HEIGHT(WINDOW_HEIGHT), GL_VERSION_MAJOR(GL_VERSION_MAJOR), GL_VERSION_MINOR(GL_VERSION_MINOR) {
 	this->window = nullptr;
 	this->framebufferWidth = this->WINDOW_WIDTH;
 	this->framebufferHeight = this->WINDOW_HEIGHT;
 	this->deltaTime = 0.f;
 	this->lastFrame = 0.f;
 	this->amount = 1000;
-	this->modelMatrices = new ModelMatrix[amount];
+	this->modelMatrices = new AsteroidModelMatrix[amount];
 
 	this->radius = 50.0;
 	this->offset = 2.5f;
@@ -155,7 +162,7 @@ void Game::render() {
 	this->models[MODEL_PLANET]->Draw(*this->shaders[SHADER_CORE_PROGRAM]);
 
 	// draw meteorites
-	for (unsigned int i = 0; i < amount; i++) {
+	for (size_t i = 0; i < this->amount; i++) {
 		modelMatrices[i].updateModelMatrix();
 		this->shaders[SHADER_CORE_PROGRAM]->setMat4("model", modelMatrices[i].getModelMatrix());
 		this->models[MODEL_ASTEROID]->Draw(*this->shaders[SHADER_CORE_PROGRAM]);
@@ -170,7 +177,7 @@ void Game::update() {
 	this->updateDt();
 	this->updateInput();
 	this->models[MODEL_PLANET]->rotate(glm::vec3(0.f, 0.03f, 0.f));
-	for (unsigned int i = 0; i < amount; i++) {
+	for (size_t i = 0; i < this->amount; i++) {
 		modelMatrices[i].rotate(glm::vec3(0.f, 0.06f, 0.f));
 	}
 }
@@ -214,8 +221,8 @@ void Game::mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 		firstMouse = false;
 	}
 
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos;
+	xoffset = xpos - lastX;
+	yoffset = lastY - ypos;
 
 	lastX = xpos;
 	lastY = ypos;
